@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>서울 25개구 저평가·고평가 지수</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f3f5f7; --surface:#fff; --ink:#16202e; --ink-2:#5a6678; --line:#d9dee5;
+  --cheap:#2b5fa8; --mid:#ecece8; --rich:#c2413b; --focus:#16202e;
+  --warn-bg:#fff4d6; --warn-ink:#6b4a00; --bad-bg:#fde3e1; --bad-ink:#7a1f19;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#0f1620; --surface:#18212e; --ink:#e8edf4; --ink-2:#9aa7b8; --line:#2b3646; --focus:#e8edf4;
+    --warn-bg:#3a2e0d; --warn-ink:#f1d48a; --bad-bg:#3d1714; --bad-ink:#f3b3ad;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#0f1620; --surface:#18212e; --ink:#e8edf4; --ink-2:#9aa7b8; --line:#2b3646; --focus:#e8edf4;
+  --warn-bg:#3a2e0d; --warn-ink:#f1d48a; --bad-bg:#3d1714; --bad-ink:#f3b3ad;
+}
+html { scroll-padding-top:env(safe-area-inset-top,0px); }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); line-height:1.55; font-size:15px;
+  font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  font-variant-numeric:tabular-nums; }
+main { max-width:520px; margin:0 auto; padding:20px 16px 48px; }
+h1 { font-size:22px; line-height:1.3; margin:0 0 6px; font-weight:700; letter-spacing:-.01em; }
+h2 { font-size:16px; margin:0 0 10px; font-weight:700; }
+p { margin:0; }
+.sub { color:var(--ink-2); font-size:13.5px; }
+.banner { margin:10px 0; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--warn-bg); color:var(--warn-ink); }
+.banner.bad { background:var(--bad-bg); color:var(--bad-ink); }
+.banner.ok { background:var(--surface); color:var(--ink-2); border:1px solid var(--line); }
+section { margin-bottom:26px; }
+.legend-bar { height:8px; border-radius:4px; background:linear-gradient(90deg,var(--cheap),var(--mid),var(--rich)); }
+.legend-lab { display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2); margin:4px 0 10px; }
+.map { display:grid; grid-template-columns:repeat(6,1fr); grid-template-rows:repeat(7,auto); gap:4px; }
+.tile { grid-column:var(--c); grid-row:var(--r); aspect-ratio:1/.85; border:2px solid transparent; border-radius:6px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; font:inherit; padding:0;
+  cursor:pointer; min-width:0; position:relative; }
+.tile .n { font-size:12.5px; font-weight:500; }
+.tile .s { font-size:17px; font-weight:700; line-height:1.1; }
+.tile .a { position:absolute; top:2px; right:4px; font-size:9px; opacity:.9; }
+.tile[aria-pressed="true"] { border-color:var(--focus); }
+.tile:focus-visible, button:focus-visible, summary:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.mapnote { font-size:12px; color:var(--ink-2); margin-top:8px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px; }
+.d-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:4px; }
+.d-name { font-size:20px; font-weight:700; }
+.d-score { font-size:30px; font-weight:700; line-height:1; }
+.tag { display:inline-block; font-size:12.5px; padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:3px; font-weight:500; }
+.quad { font-size:13.5px; color:var(--ink-2); margin-bottom:8px; }
+.comp { margin:9px 0; }
+.comp-top { display:flex; justify-content:space-between; font-size:13px; }
+.comp-top span:last-child { font-weight:700; }
+.hint { color:var(--ink-2); font-size:11.5px; }
+.bar { height:7px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:3px; }
+.bar i { display:block; height:100%; border-radius:4px; }
+.spark { width:100%; height:64px; margin-top:8px; display:block; }
+.raw { width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
+.raw td { padding:5px 0; border-top:1px solid var(--line); }
+.raw td:last-child { text-align:right; font-weight:500; }
+.raw td:first-child { color:var(--ink-2); }
+.rank { list-style:none; margin:0; padding:0; }
+.rank button { width:100%; display:grid; grid-template-columns:24px 56px 1fr 34px 18px; align-items:center; gap:8px;
+  padding:7px 4px; border:0; border-bottom:1px solid var(--line); background:none; color:var(--ink);
+  font:inherit; font-size:14px; text-align:left; cursor:pointer; }
+.rank .no { color:var(--ink-2); font-size:12.5px; }
+.rank .bar { margin:0; height:8px; }
+.rank .v { text-align:right; font-weight:700; }
+.rank .ar { font-size:11px; color:var(--ink-2); text-align:center; }
+details { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+summary { cursor:pointer; font-weight:700; font-size:15px; }
+details[open] summary { margin-bottom:10px; }
+.method { font-size:13.5px; color:var(--ink-2); }
+.method p { margin-bottom:8px; }
+.method b { color:var(--ink); }
+.src { font-size:13px; margin:4px 0; display:flex; justify-content:space-between; gap:8px; }
+.src .ok { color:var(--cheap); } .src .ng { color:var(--rich); }
+@media (prefers-reduced-motion: no-preference) { .bar i { transition:width .25s ease; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>서울 25개구 아파트<br>저평가·고평가 지수</h1>
+  <p class="sub">각 구를 그 구 자신의 최근 10년과 비교합니다. 낮을수록 저평가, 높을수록 고평가.</p>
+  <div id="banners"></div>
+  <p class="sub" id="asof" style="margin:6px 0 12px"></p>
+
+  <section id="mapSec" hidden>
+    <div class="legend-bar"></div>
+    <div class="legend-lab"><span>0 저평가</span><span>50</span><span>고평가 100</span></div>
+    <div class="map" id="map" role="group" aria-label="서울 25개구 지수 지도"></div>
+    <p class="mapnote">색은 가치 점수, 모서리 화살표는 최근 12주 매매가 방향(▲상승 ▼하락 ―보합)입니다. 실제 지리를 단순화한 타일 지도입니다.</p>
+  </section>
+
+  <section id="detailSec" hidden><div class="card" id="detail" aria-live="polite"></div></section>
+
+  <section id="rankSec" hidden>
+    <h2>저평가 순위</h2>
+    <ol class="rank" id="rank"></ol>
+  </section>
+
+  <section>
+    <details>
+      <summary>데이터 상태</summary>
+      <div id="status"></div>
+    </details>
+    <details>
+      <summary>지수 산식</summary>
+      <div class="method">
+        <p><b>왜 자기 역사인가</b> 강남은 원래 비싸고 도봉은 원래 쌉니다. 구끼리 수준을 비교하면 저평가가 곧 비인기 지역이 되므로, 모든 지표를 그 구 자신의 최근 10년 분포 안에서의 위치(백분위)로 바꿨습니다.</p>
+        <p><b>가치 점수</b> 매매/전세 지수비 15% + 장기추세 괴리 20% + 직전 고점 대비 15% + 구 간 상대가치 20%. 데이터가 없는 항목은 빼고 나머지로 재가중합니다.</p>
+        <p><b>모멘텀</b> 가치와 분리해 화살표로만 표시합니다. 저평가인데 계속 하락 중이면 ‘관망’으로 구분합니다.</p>
+        <p><b>갱신 주기</b> 매매·전세 지수는 주 1회(부동산원 공표), 매일 확인하지만 새로 반영되는 값은 이 주기를 따릅니다.</p>
+        <p>백분위 기반의 상대 평가이며 절대 적정가나 투자 권유가 아닙니다.</p>
+      </div>
+    </details>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var GRID = {
+    "도봉":[4,1],"노원":[5,1],
+    "은평":[2,2],"성북":[3,2],"강북":[4,2],"중랑":[5,2],
+    "서대문":[2,3],"종로":[3,3],"동대문":[4,3],"광진":[5,3],
+    "마포":[2,4],"중구":[3,4],"성동":[4,4],
+    "강서":[1,5],"영등포":[2,5],"용산":[3,5],"강남":[4,5],"송파":[5,5],"강동":[6,5],
+    "양천":[1,6],"구로":[2,6],"동작":[3,6],"서초":[4,6],
+    "금천":[2,7],"관악":[3,7]
+  };
+  var HINT = {
+    jeonse_ratio:"낮을수록 고평가", yield_spread:"낮을수록 고평가", sale_jeonse:"높을수록 고평가",
+    trend_dev:"추세 위일수록 고평가", drawdown:"고점에 가까울수록 고평가", relative:"서울 평균 대비 비쌀수록 고평가"
+  };
+  var ORDER = ["jeonse_ratio","yield_spread","sale_jeonse","trend_dev","drawdown","relative"];
+  var ARROW = { up:"▲", down:"▼", flat:"―" };
+  var STOPS = [[0,[43,95,168]],[50,[236,236,232]],[100,[194,65,59]]];
+  var S = { data:null, sel:null };
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function rgb(s){ s=Math.max(0,Math.min(100,s)); var a=STOPS[0],b=STOPS[1]; if(s>50){a=STOPS[1];b=STOPS[2];}
+    var t=(s-a[0])/(b[0]-a[0]); return a[1].map(function(c,i){return Math.round(c+(b[1][i]-c)*t);}); }
+  function css(s){ var c=rgb(s); return "rgb("+c[0]+","+c[1]+","+c[2]+")"; }
+  function txt(s){ var c=rgb(s); return (0.299*c[0]+0.587*c[1]+0.114*c[2])/255>0.62?"#16202e":"#fff"; }
+  function fmt(v,u,sign){ if(v===null||v===undefined) return "-"; return (sign&&v>0?"+":"")+v+(u||""); }
+  function ago(iso){ if(!iso) return null; var t=Date.parse(iso); if(isNaN(t)) return null; return (Date.now()-t)/3600000; }
+  function kst(iso){ return iso ? iso.replace("T"," ").slice(0,16) : "-"; }
+
+  function banners(d){
+    var h="";
+    if(d.is_sample) h+='<div class="banner">합성 샘플 데이터입니다. 실제 통계가 아닙니다. 자동 수집이 한 번 실행되면 실제 값으로 바뀝니다.</div>';
+    var age=ago(d.generated_at);
+    if(!d.is_sample && (age===null || age>96)) h+='<div class="banner bad">데이터가 4일 넘게 갱신되지 않았습니다. 자동 갱신(GitHub Actions) 상태를 확인하세요.</div>';
+    (d.warnings||[]).forEach(function(w){ if(!d.is_sample) h+='<div class="banner">'+esc(w)+'</div>'; });
+    if(d.components_missing && d.components_missing.length && !d.is_sample){
+      h+='<div class="banner ok">현재 빠진 항목: '+d.components_missing.map(function(k){return esc((d.labels||{})[k]||k);}).join(", ")+' (나머지 항목으로 재가중)</div>';
+    }
+    $("banners").innerHTML=h;
+    $("asof").textContent="데이터 기준주 "+d.asof+" · 갱신 "+kst(d.generated_at);
+  }
+
+  function renderMap(){
+    var m=$("map"); m.innerHTML="";
+    S.data.gu.forEach(function(g){
+      var p=GRID[g.name]; if(!p) return;
+      var b=document.createElement("button"); b.type="button"; b.className="tile";
+      b.style.setProperty("--c",p[0]); b.style.setProperty("--r",p[1]);
+      b.style.background=css(g.value); b.style.color=txt(g.value);
+      b.setAttribute("aria-pressed", S.sel===g.name?"true":"false");
+      b.setAttribute("aria-label", g.name+"구 "+Math.round(g.value)+"점 "+g.label+" "+g.quadrant);
+      b.innerHTML='<span class="a">'+ARROW[g.arrow]+'</span><span class="n">'+esc(g.name)+'</span><span class="s">'+Math.round(g.value)+'</span>';
+      b.addEventListener("click",function(){ select(g.name,"nearest"); });
+      m.appendChild(b);
+    });
+  }
+
+  function spark(h){
+    if(!h||h.length<2) return "";
+    var W=300,H=64,n=h.length,pts=h.map(function(p,i){return (i/(n-1)*W).toFixed(1)+","+(H-p[1]/100*H).toFixed(1);}).join(" ");
+    return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="최근 2년 가치 점수 추이">'+
+      '<line x1="0" x2="'+W+'" y1="'+H/2+'" y2="'+H/2+'" stroke="currentColor" stroke-opacity=".2" stroke-dasharray="3 3"/>'+
+      '<polyline fill="none" stroke="currentColor" stroke-width="2" points="'+pts+'"/></svg>';
+  }
+
+  function renderDetail(){
+    var g=S.data.gu.filter(function(x){return x.name===S.sel;})[0]; if(!g) return;
+    var L=S.data.labels||{}, m=g.metrics||{};
+    var h='<div class="d-head"><div><span class="d-name">'+esc(g.name)+'구</span><span class="tag" style="background:'+css(g.value)+';color:'+txt(g.value)+'">'+esc(g.label)+'</span></div>'+
+      '<div class="d-score">'+Math.round(g.value)+'</div></div><p class="quad">'+esc(g.quadrant)+'</p>';
+    ORDER.forEach(function(k){
+      var v=g.components[k]; if(v===undefined||v===null) return;
+      h+='<div class="comp"><div class="comp-top"><span>'+esc(L[k]||k)+' <span class="hint">'+HINT[k]+'</span></span><span>'+Math.round(v)+'</span></div>'+
+         '<div class="bar"><i style="width:'+v+'%;background:'+css(v)+'"></i></div></div>';
+    });
+    h+='<p class="hint" style="margin-top:8px">최근 2년 가치 점수 추이</p>'+spark(g.history);
+    h+='<table class="raw"><tbody>'+
+      '<tr><td>전세가율(실거래)</td><td>'+fmt(m.jeonse_ratio,"%")+'</td></tr>'+
+      '<tr><td>임대수익률(월세 환산)</td><td>'+fmt(m.yield,"%")+'</td></tr>'+
+      '<tr><td>장기추세 대비</td><td>'+fmt(m.trend_dev,"%",1)+'</td></tr>'+
+      '<tr><td>10년 고점 대비</td><td>'+fmt(m.drawdown,"%",1)+'</td></tr>'+
+      '<tr><td>서울 평균 대비 상대가격</td><td>'+fmt(m.relative,"%",1)+'</td></tr>'+
+      '<tr><td>최근 4주 · 12주 매매지수</td><td>'+fmt(m.m4,"%",1)+' · '+fmt(m.m12,"%",1)+'</td></tr>'+
+      '<tr><td>최근 12주 전세지수</td><td>'+fmt(m.j12,"%",1)+'</td></tr>'+
+      '</tbody></table>';
+    $("detail").innerHTML=h;
+  }
+
+  function renderRank(){
+    var ol=$("rank"); ol.innerHTML="";
+    S.data.gu.slice().sort(function(a,b){return a.value-b.value;}).forEach(function(g,i){
+      var li=document.createElement("li"), b=document.createElement("button"); b.type="button";
+      b.innerHTML='<span class="no">'+(i+1)+'</span><span>'+esc(g.name)+'</span>'+
+        '<span class="bar"><i style="width:'+g.value+'%;background:'+css(g.value)+'"></i></span>'+
+        '<span class="v">'+Math.round(g.value)+'</span><span class="ar">'+ARROW[g.arrow]+'</span>';
+      b.addEventListener("click",function(){ select(g.name,"center"); });
+      li.appendChild(b); ol.appendChild(li);
+    });
+  }
+
+  function renderStatus(d){
+    var st=d.status||{}, names={rone_sale:"부동산원 매매지수(주간)",rone_jeonse:"부동산원 전세지수(주간)"};
+    var h="";
+    Object.keys(names).forEach(function(k){
+      var s=st[k]; if(!s) return;
+      var extra=s.ok?(s.last?" · "+esc(s.last):""):" · "+esc(s.error||"실패");
+      h+='<div class="src"><span>'+names[k]+'</span><span class="'+(s.ok?"ok":"ng")+'">'+(s.ok?"정상":"오류")+extra+'</span></div>';
+    });
+    $("status").innerHTML=h||'<p class="sub">상태 정보가 없습니다.</p>';
+  }
+
+  function select(name,block){
+    S.sel=name; renderMap(); renderDetail();
+    if(block){ try{ $("detail").scrollIntoView({behavior:"smooth",block:block}); }catch(e){ $("detail").scrollIntoView(); } }
+  }
+
+  function start(d){
+    S.data=d;
+    if(!d.gu||!d.gu.length){ $("banners").innerHTML='<div class="banner bad">표시할 데이터가 없습니다.</div>'; return; }
+    S.sel=d.gu.slice().sort(function(a,b){return a.value-b.value;})[0].name;
+    banners(d); renderStatus(d);
+    ["mapSec","detailSec","rankSec"].forEach(function(id){ $(id).hidden=false; });
+    renderMap(); renderDetail(); renderRank();
+  }
+
+  fetch("latest.json?t="+Date.now(),{cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(start)
+    .catch(function(e){
+      $("banners").innerHTML='<div class="banner bad">데이터를 불러오지 못했습니다('+esc(e.message)+'). 파일로 직접 열지 말고 GitHub Pages 주소로 접속하세요.</div>';
+    });
+})();
+</script>
+</body>
+</html>
